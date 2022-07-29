@@ -1,7 +1,9 @@
 package me.dio.soccernews.ui.news;
 
 import android.app.Application;
+import android.os.AsyncTask;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -9,6 +11,7 @@ import androidx.room.Room;
 
 import java.util.List;
 
+import me.dio.soccernews.data.SoccerNewsRepository;
 import me.dio.soccernews.data.local.AppDatabase;
 import me.dio.soccernews.data.remote.SoccerNewsApi;
 import me.dio.soccernews.domain.News;
@@ -26,23 +29,16 @@ public class NewsViewModel extends ViewModel {
 
     private final MutableLiveData<List<News>> news = new MutableLiveData<>();
     private final MutableLiveData<State> state = new MutableLiveData<>();
-    private final SoccerNewsApi api;
 
     public NewsViewModel() {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://kadu1811.github.io/soccer_news_api//")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-        api = retrofit.create(SoccerNewsApi.class);
-
-
         this.findNews();
     }
 
     private void findNews() {
-        api.getNews().enqueue(new Callback<List<News>>() {
+        state.setValue(State.DOING);
+        SoccerNewsRepository.getInstance().getRemoteApi().getNews().enqueue(new Callback<List<News>>() {
             @Override
-            public void onResponse(Call<List<News>> call, Response<List<News>> response) {
+            public void onResponse(@NonNull Call<List<News>> call, @NonNull Response<List<News>> response) {
                 if (response.isSuccessful()) {
                     news.setValue(response.body());
                     state.setValue(State.DONE);
@@ -57,6 +53,10 @@ public class NewsViewModel extends ViewModel {
                 state.setValue(State.ERROR);
             }
         });
+    }
+
+    public void saveNews(News news) {
+        AsyncTask.execute(() -> SoccerNewsRepository.getInstance().getLocalDb().newsDao().save(news));
     }
 
     public LiveData<List<News>> getNews() {
