@@ -9,4 +9,7 @@
 
     <color name="black">#000a12</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="favorite_active">#f44336</color>
+    <color name="favorite_inactive">#737373</color>
 </resources>
